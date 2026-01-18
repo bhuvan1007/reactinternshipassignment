@@ -1,0 +1,382 @@
+/* Google Fonts Import */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap');
+
+/* PrimeReact CSS */
+@import 'primereact/resources/themes/lara-light-cyan/theme.css';
+@import 'primereact/resources/primereact.min.css';
+@import 'primeicons/primeicons.css';
+
+:root {
+  /* Colors */
+  --primary-color: #0f172a;
+  /* Slate 900 */
+  --secondary-color: #64748b;
+  /* Slate 500 */
+  --accent-color: #3b82f6;
+  /* Blue 500 - elegant interactive */
+  --accent-hover: #2563eb;
+  --bg-page: #f8fafc;
+  /* Slate 50 */
+  --bg-surface: #ffffff;
+  --border-color: #e2e8f0;
+  /* Slate 200 */
+  --text-primary: #1e293b;
+  /* Slate 800 */
+  --text-secondary: #64748b;
+  /* Slate 500 */
+
+  /* Typography */
+  --font-heading: 'Playfair Display', serif;
+  --font-body: 'Inter', sans-serif;
+
+  /* Spacing */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 3rem;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+
+  /* Radius */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background-color: var(--bg-page);
+  font-family: var(--font-body);
+  color: var(--text-primary);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Main Container */
+.art-gallery-container {
+  max-width: 95vw;
+  /* Wider container */
+  margin: 0 auto;
+  padding: 40px 24px;
+  min-height: 100vh;
+}
+
+/* Typography & Header */
+.main-header {
+  text-align: center;
+  margin-bottom: 3rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.gallery-title {
+  font-family: var(--font-heading);
+  font-size: 3.5rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  margin: 0 0 0.5rem 0;
+  letter-spacing: -0.02em;
+}
+
+.gallery-subtitle {
+  font-size: 1.125rem;
+  color: var(--secondary-color);
+  font-weight: 400;
+  margin: 0;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Controls Section */
+.header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding: 0.5rem 0;
+}
+
+.selection-info {
+  display: flex;
+  align-items: center;
+}
+
+.selected-count {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--accent-color);
+  background-color: #eff6ff;
+  /* Blue 50 */
+  padding: 0.5rem 1rem;
+  border-radius: 2rem;
+  letter-spacing: 0.02em;
+}
+
+/* Custom Button */
+.custom-selection-btn {
+  background-color: var(--bg-surface) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-color) !important;
+  font-family: var(--font-body) !important;
+  font-weight: 500 !important;
+  padding: 0.6rem 1.25rem !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s ease !important;
+}
+
+.custom-selection-btn:hover {
+  background-color: #f1f5f9 !important;
+  /* Slate 100 */
+  border-color: #cbd5e1 !important;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.custom-selection-btn i {
+  font-size: 0.9rem;
+  margin-right: 0.5rem;
+  color: var(--secondary-color);
+}
+
+/* Overlay */
+.custom-overlay .p-overlaypanel-content {
+  padding: 1.25rem;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+}
+
+.overlay-title {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--primary-color);
+  margin: 0 0 1rem 0;
+}
+
+.overlay-controls {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.number-input {
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+  padding: 0.5rem;
+}
+
+.select-btn {
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+  border-radius: var(--radius-sm) !important;
+}
+
+.select-btn:hover {
+  background-color: #020617 !important;
+  /* Slate 950 */
+  border-color: #020617 !important;
+}
+
+/* Table Card */
+.table-container {
+  background-color: var(--bg-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+}
+
+/* Primereact Table Overrides */
+.professional-table .p-datatable-header {
+  background: transparent;
+  padding: 0;
+  border: none;
+}
+
+.professional-table .p-datatable-thead>tr>th {
+  background-color: #ffffff;
+  color: var(--secondary-color);
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 1.25rem 1rem;
+  border-bottom: 2px solid var(--border-color);
+  border-top: none;
+  border-right: 1px solid var(--border-color) !important;
+  /* Restored Grid Line */
+}
+
+.professional-table .p-datatable-thead>tr>th:last-child {
+  border-right: none !important;
+}
+
+.professional-table .p-datatable-tbody>tr {
+  background-color: #ffffff;
+  transition: background-color 0.2s;
+  border-bottom: 1px solid var(--border-color);
+  /* Stronger row border */
+}
+
+.professional-table .p-datatable-tbody>tr:last-child {
+  border-bottom: none;
+}
+
+.professional-table .p-datatable-tbody>tr>td {
+  padding: 1.25rem 1rem;
+  border-right: 1px solid var(--border-color) !important;
+  /* Restored Grid Line */
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  vertical-align: middle;
+}
+
+.professional-table .p-datatable-tbody>tr>td:last-child {
+  border-right: none !important;
+}
+
+/* Row Hover */
+.professional-table .p-datatable-tbody>tr:hover {
+  background-color: #f8fafc !important;
+}
+
+/* Selected Row */
+.professional-table .p-datatable-tbody>tr.p-highlight {
+  background-color: #f0fdf4 !important;
+  /* Very subtle green/slate tint */
+  color: var(--text-primary);
+}
+
+.professional-table .p-datatable-tbody>tr.p-highlight>td {
+  color: var(--text-primary);
+}
+
+/* Checkbox Customization */
+.professional-table .p-checkbox .p-checkbox-box {
+  border-radius: 4px;
+  border-color: #cbd5e1;
+}
+
+.professional-table .p-checkbox .p-checkbox-box.p-highlight {
+  background-color: var(--accent-color);
+  border-color: var(--accent-color);
+}
+
+/* Cell Typography */
+.artwork-title {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: var(--primary-color);
+}
+
+.artist-name {
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.inscriptions-text {
+  font-family: 'Inter', monospace;
+  /* Monospace effect for data? No, keep it clean */
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: #94a3b8;
+}
+
+.date-value {
+  font-feature-settings: "tnum";
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+/* Pagination */
+.pagination-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 0 0 0;
+  /* Add top padding */
+  margin-top: 2rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.showing-text {
+  font-size: 0.875rem;
+  color: var(--secondary-color);
+}
+
+.custom-horizontal-pagination {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pagination-btn {
+  width: 2.25rem;
+  height: 2.25rem;
+  background-color: #ffffff;
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  border-radius: 0.375rem;
+  /* Soft square */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pagination-btn:hover:not(.disabled) {
+  background-color: #f8fafc;
+  border-color: #cbd5e1;
+  color: var(--primary-color);
+}
+
+.pagination-btn.active {
+  background-color: var(--primary-color);
+  color: #ffffff;
+  border-color: var(--primary-color);
+  box-shadow: var(--shadow-sm);
+}
+
+.pagination-btn.disabled {
+  opacity: 0.4;
+  cursor: default;
+  background-color: #f1f5f9;
+}
+
+
+.controls-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .gallery-title {
+    font-size: 2.5rem;
+  }
+
+  .header-section {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+}
