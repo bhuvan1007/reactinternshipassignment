@@ -17,6 +17,19 @@ const App: React.FC = () => {
   const [customSelectionTotal, setCustomSelectionTotal] = useState<number>(0);
   const [selectCount, setSelectCount] = useState<string>('');
 
+  /* 
+   * CRITICAL: Use a ref to track the latest 'customSelectionTotal' value.
+   * This bypasses any stale closure issues inside callbacks (like onSelectionChange)
+   * that might be cached by PrimeReact or React rendering cycles.
+   * Without this, the callback might see '0' instead of '15', causing logic errors.
+   */
+  const customTotalRef = useRef<number>(customSelectionTotal);
+
+  // Update ref whenever state changes
+  useEffect(() => {
+    customTotalRef.current = customSelectionTotal;
+  }, [customSelectionTotal]);
+
   const overlayRef = useRef<OverlayPanel>(null);
   const rowsPerPage = 12;
 
@@ -27,7 +40,12 @@ const App: React.FC = () => {
   const fetchArtworks = async (page: number): Promise<void> => {
     setLoading(true);
     try {
-      const response = await fetch(`https://api.artic.edu/api/v1/artworks?page=${page}`);
+      /* 
+       * CRITICAL: Enforce limit=12 to match our 'rowsPerPage' constant.
+       * If the API returns a different default (e.g. 25), our global index
+       * calculation will collide across pages, causing severe selection bugs.
+       */
+      const response = await fetch(`https://api.artic.edu/api/v1/artworks?page=${page}&limit=${rowsPerPage}`);
       const data: ApiResponse = await response.json();
 
       setArtworks(data.data);
@@ -64,13 +82,16 @@ const App: React.FC = () => {
     const nextSelectedIds = new Set(selectedRowIds);
     const nextDeselectedIds = new Set(deselectedRowIds);
 
+    // Get the FRESH value from ref
+    const currentCustomTotal = customTotalRef.current;
+
     // Loop through ALL items on the current page to determine changes
     artworks.forEach((artwork, index) => {
       const isSelectedNow = currentSelectedIds.has(artwork.id);
 
       // Calculate if it SHOULD be selected by the "Global Count" rule
       const globalIndex = (currentPage - 1) * rowsPerPage + index;
-      const autoSelectedByRule = globalIndex < customSelectionTotal;
+      const autoSelectedByRule = globalIndex < currentCustomTotal;
 
       if (isSelectedNow) {
         // User (or logic) wants this selected.
@@ -148,10 +169,6 @@ const App: React.FC = () => {
     }
   };
 
-  /* 
-   * Strict Compliance: NO fetching logic here. 
-   * Just update the math rule.
-   */
   const handleCustomRowSelection = (): void => {
     const count = parseInt(selectCount);
 
@@ -160,12 +177,13 @@ const App: React.FC = () => {
       return;
     }
 
-    // Clear manual selections to ensure the count is accurate and matches the user's "Select X" intent.
-    // This resolves the ambiguity of "adding" vs "replacing". 
-    // Given the difficulty of tracking overlap without fetching, replacing is the only robust compliant compliant.
+    // Force clear everything to start fresh compliant state
     setSelectedRowIds(new Set());
     setDeselectedRowIds(new Set());
     setCustomSelectionTotal(count);
+    // Explicitly update ref immediately just in case of weird race before next render?
+    // Not strictly needed if state update triggers effect, but conceptually safe.
+    customTotalRef.current = count;
 
     overlayRef.current?.hide();
     setSelectCount('');
@@ -175,7 +193,7 @@ const App: React.FC = () => {
     overlayRef.current?.toggle(event);
   };
 
-  // Custom body templates for better formatting
+  // Custom body templates
   const titleBodyTemplate = (rowData: Artwork) => {
     return (
       <div className="title-cell">
