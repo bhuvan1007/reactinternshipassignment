@@ -1,0 +1,10 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[server]
+  # Redirects for Single Page Apps (SPA) to prevent 404s on reload
+  [[redirects]]
+    from = "/*"
+    to = "/index.html"
+    status = 200
