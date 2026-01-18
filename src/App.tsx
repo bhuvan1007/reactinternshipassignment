@@ -60,8 +60,11 @@ const App: React.FC = () => {
     const currentSelectedOnPage = e.value as Artwork[];
     const currentSelectedIds = new Set(currentSelectedOnPage.map(a => a.id));
 
-    // We need to compare with what WAS conceptually selected on this page to determine diffs
-    // Loop through ALL items on the current page to update our Sets
+    // Create clones of current state to modify
+    const nextSelectedIds = new Set(selectedRowIds);
+    const nextDeselectedIds = new Set(deselectedRowIds);
+
+    // Loop through ALL items on the current page to determine changes
     artworks.forEach((artwork, index) => {
       const isSelectedNow = currentSelectedIds.has(artwork.id);
 
@@ -72,40 +75,35 @@ const App: React.FC = () => {
       if (isSelectedNow) {
         // User (or logic) wants this selected.
         if (autoSelectedByRule) {
-          // If it's auto-selected, we don't need it in 'selectedRowIds', 
-          // BUT we must ensure it's NOT in 'deselectedRowIds'
-          if (deselectedRowIds.has(artwork.id)) {
-            setDeselectedRowIds(prev => {
-              const next = new Set(prev);
-              next.delete(artwork.id);
-              return next;
-            });
+          // If it's auto-selected, ensure it's NOT in 'deselectedRowIds'
+          if (nextDeselectedIds.has(artwork.id)) {
+            nextDeselectedIds.delete(artwork.id);
           }
         } else {
-          // Not auto-selected, so must be explicitly in selectedRowIds
-          if (!selectedRowIds.has(artwork.id)) {
-            setSelectedRowIds(prev => new Set(prev).add(artwork.id));
+          // If it's NOT auto-selected, it MUST be in 'selectedRowIds'
+          if (!nextSelectedIds.has(artwork.id)) {
+            nextSelectedIds.add(artwork.id);
           }
         }
       } else {
-        // User wants this DE-selected.
+        // User wants this DE-selected (it's NOT in e.value).
         if (autoSelectedByRule) {
-          // If it WAS auto-selected, we must explicitly adding to deselectedRowIds to block it
-          if (!deselectedRowIds.has(artwork.id)) {
-            setDeselectedRowIds(prev => new Set(prev).add(artwork.id));
+          // If it WAS auto-selected, we must add to 'deselectedRowIds' to block it
+          if (!nextDeselectedIds.has(artwork.id)) {
+            nextDeselectedIds.add(artwork.id);
           }
         } else {
-          // If it wasn't auto-selected, we just ensure it's removed from selectedRowIds
-          if (selectedRowIds.has(artwork.id)) {
-            setSelectedRowIds(prev => {
-              const next = new Set(prev);
-              next.delete(artwork.id);
-              return next;
-            });
+          // If it wasn't auto-selected, we just ensure it's removed from 'selectedRowIds'
+          if (nextSelectedIds.has(artwork.id)) {
+            nextSelectedIds.delete(artwork.id);
           }
         }
       }
     });
+
+    // Apply batched updates
+    setSelectedRowIds(nextSelectedIds);
+    setDeselectedRowIds(nextDeselectedIds);
   };
 
   const getSelectedArtworks = (): Artwork[] => {
@@ -120,9 +118,7 @@ const App: React.FC = () => {
     const currentPageIds = artworks.map(artwork => artwork.id);
 
     if (e.checked) {
-      // "Select All" on current page usually means manual selection of everyone? 
-      // OR we can leave it to the default logic.
-      // Let's implement manual override for clarity.
+      // "Select All" on current page
       currentPageIds.forEach(id => {
         // Force select
         setSelectedRowIds(prev => new Set(prev).add(id));
@@ -139,8 +135,6 @@ const App: React.FC = () => {
       // "Unselect All" on current page
       currentPageIds.forEach(id => {
         // If was auto-selected, block it
-        // We can just BLINDLY block everything on this page for simplicity?
-        // Or check if needed? Safer to just block.
         setDeselectedRowIds(prev => new Set(prev).add(id));
         // Remove from manual select if present
         if (selectedRowIds.has(id)) {
@@ -165,13 +159,6 @@ const App: React.FC = () => {
       alert('Please enter a valid number');
       return;
     }
-
-    // "Not removing existing" -> We keep `selectedRowIds`.
-    // But we probably want to reset "deselections" because we are applying a new broad rule?
-    // User flow: "Select 20". Then "Select 10".
-    // If I select 20, then 10. The global rule shrinks. 
-    // Rows 10-19 are no longer auto-selected. They just drop off (unless they were also manually in selectedRowIds).
-    // This feels correct. 
 
     // Clear manual selections to ensure the count is accurate and matches the user's "Select X" intent.
     // This resolves the ambiguity of "adding" vs "replacing". 
