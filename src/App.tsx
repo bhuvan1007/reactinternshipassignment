@@ -19,9 +19,7 @@ const App: React.FC = () => {
 
   /* 
    * CRITICAL: Use a ref to track the latest 'customSelectionTotal' value.
-   * This bypasses any stale closure issues inside callbacks (like onSelectionChange)
-   * that might be cached by PrimeReact or React rendering cycles.
-   * Without this, the callback might see '0' instead of '15', causing logic errors.
+   * This bypasses any stale closure issues inside callbacks.
    */
   const customTotalRef = useRef<number>(customSelectionTotal);
 
@@ -42,8 +40,6 @@ const App: React.FC = () => {
     try {
       /* 
        * CRITICAL: Enforce limit=12 to match our 'rowsPerPage' constant.
-       * If the API returns a different default (e.g. 25), our global index
-       * calculation will collide across pages, causing severe selection bugs.
        */
       const response = await fetch(`https://api.artic.edu/api/v1/artworks?page=${page}&limit=${rowsPerPage}`);
       const data: ApiResponse = await response.json();
@@ -66,65 +62,66 @@ const App: React.FC = () => {
     if (selectedRowIds.has(rowId)) return true;
 
     // 3. Logic-based selection:
-    // Calculate global index of this row
     const globalIndex = (currentPage - 1) * rowsPerPage + rowIndex;
-
-    // If it falls within the custom requested count
     return globalIndex < customSelectionTotal;
   };
 
-  const onSelectionChange = (e: any): void => {
-    // e.value contains the array of currently selected objects on THIS page
-    const currentSelectedOnPage = e.value as Artwork[];
-    const currentSelectedIds = new Set(currentSelectedOnPage.map(a => a.id));
+  /*
+   * Transactional Handler: Row Select
+   * Only deals with the specific row that was clicked. Safe from mass-pollution.
+   */
+  const onRowSelect = (event: any) => {
+    const { id } = event.data;
+    const index = artworks.findIndex(a => a.id === id);
+    if (index === -1) return; // Should not happen
 
-    // Create clones of current state to modify
-    const nextSelectedIds = new Set(selectedRowIds);
-    const nextDeselectedIds = new Set(deselectedRowIds);
-
-    // Get the FRESH value from ref
+    const globalIndex = (currentPage - 1) * rowsPerPage + index;
     const currentCustomTotal = customTotalRef.current;
+    const autoSelectedByRule = globalIndex < currentCustomTotal;
 
-    // Loop through ALL items on the current page to determine changes
-    artworks.forEach((artwork, index) => {
-      const isSelectedNow = currentSelectedIds.has(artwork.id);
+    if (autoSelectedByRule) {
+      // It was auto-selected but maybe in 'deselectedRowIds'. Remove it to re-select.
+      setDeselectedRowIds(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    } else {
+      // It was NOT auto-selected. Ensure it is in 'selectedRowIds'.
+      setSelectedRowIds(prev => new Set(prev).add(id));
+    }
+  };
 
-      // Calculate if it SHOULD be selected by the "Global Count" rule
-      const globalIndex = (currentPage - 1) * rowsPerPage + index;
-      const autoSelectedByRule = globalIndex < currentCustomTotal;
+  /*
+   * Transactional Handler: Row Unselect
+   * Only deals with the specific row that was clicked. Safe from mass-pollution.
+   */
+  const onRowUnselect = (event: any) => {
+    const { id } = event.data;
+    const index = artworks.findIndex(a => a.id === id);
+    if (index === -1) return;
 
-      if (isSelectedNow) {
-        // User (or logic) wants this selected.
-        if (autoSelectedByRule) {
-          // If it's auto-selected, ensure it's NOT in 'deselectedRowIds'
-          if (nextDeselectedIds.has(artwork.id)) {
-            nextDeselectedIds.delete(artwork.id);
-          }
-        } else {
-          // If it's NOT auto-selected, it MUST be in 'selectedRowIds'
-          if (!nextSelectedIds.has(artwork.id)) {
-            nextSelectedIds.add(artwork.id);
-          }
-        }
-      } else {
-        // User wants this DE-selected (it's NOT in e.value).
-        if (autoSelectedByRule) {
-          // If it WAS auto-selected, we must add to 'deselectedRowIds' to block it
-          if (!nextDeselectedIds.has(artwork.id)) {
-            nextDeselectedIds.add(artwork.id);
-          }
-        } else {
-          // If it wasn't auto-selected, we just ensure it's removed from 'selectedRowIds'
-          if (nextSelectedIds.has(artwork.id)) {
-            nextSelectedIds.delete(artwork.id);
-          }
-        }
-      }
-    });
+    const globalIndex = (currentPage - 1) * rowsPerPage + index;
+    const currentCustomTotal = customTotalRef.current;
+    const autoSelectedByRule = globalIndex < currentCustomTotal;
 
-    // Apply batched updates
-    setSelectedRowIds(nextSelectedIds);
-    setDeselectedRowIds(nextDeselectedIds);
+    if (autoSelectedByRule) {
+      // It WAS auto-selected. We must add to 'deselectedRowIds' to block it.
+      setDeselectedRowIds(prev => new Set(prev).add(id));
+      // Also remove from selectedRowIds if it somehow got there, to be clean
+      setSelectedRowIds(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    } else {
+      // It was NOT auto-selected. Just remove from 'selectedRowIds'.
+      setSelectedRowIds(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }
   };
 
   const getSelectedArtworks = (): Artwork[] => {
@@ -181,8 +178,8 @@ const App: React.FC = () => {
     setSelectedRowIds(new Set());
     setDeselectedRowIds(new Set());
     setCustomSelectionTotal(count);
-    // Explicitly update ref immediately just in case of weird race before next render?
-    // Not strictly needed if state update triggers effect, but conceptually safe.
+
+    // Explicitly update ref immediately
     customTotalRef.current = count;
 
     overlayRef.current?.hide();
@@ -284,7 +281,14 @@ const App: React.FC = () => {
           value={artworks}
           loading={loading}
           selection={getSelectedArtworks()}
-          onSelectionChange={onSelectionChange}
+          /* 
+           * CRITICAL: We use onRowSelect/onRowUnselect for precise state updates.
+           * onSelectionChange left empty/minimal to allow controlled prop to work without
+           * wrongly interpreting diffs.
+           */
+          onSelectionChange={() => { }}
+          onRowSelect={onRowSelect}
+          onRowUnselect={onRowUnselect}
           selectAll={isAllSelected()}
           onSelectAllChange={onSelectAllChange}
           selectionMode="multiple"
